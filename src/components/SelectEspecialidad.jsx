@@ -1,65 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerEspecialidades } from '../services/api';
 
-const SelectEspecialidad = ({ value, onChange, required }) => {
+const SelectEspecialidad = ({ onEspecialidadChange }) => {
   const [especialidades, setEspecialidades] = useState([]);
-  const [cargando, setCargando] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const cargarEspecialidades = async () => {
+    const fetchEspecialidades = async () => {
       try {
-        setCargando(true);
-        const response = await obtenerEspecialidades();
-        setEspecialidades(response.especialidades || []);
+        const data = await obtenerEspecialidades();
+        // Ajusta según la estructura de tu API
+        setEspecialidades(data.especialidades || []);
       } catch (err) {
-        setError('No se pudieron cargar las especialidades. Intente más tarde.');
+        setError('Error al cargar especialidades');
         console.error(err);
       } finally {
-        setCargando(false);
+        setLoading(false);
       }
     };
 
-    cargarEspecialidades();
+    fetchEspecialidades();
   }, []);
 
-  if (cargando) {
-    return (
-      <div className="form-group">
-        <label>Especialidad Médica</label>
-        <div>Cargando especialidades...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="form-group">
-        <label>Especialidad Médica</label>
-        <div className="error">{error}</div>
-      </div>
-    );
-  }
+  if (loading) return <div>Cargando especialidades...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
-    <div className="form-group">
-      <label htmlFor="especialidad_codigo">Especialidad Médica {required && <span className="required">*</span>}</label>
-      <select
-        id="especialidad_codigo"
-        name="especialidad_codigo"
-        value={value}
-        onChange={onChange}
-        required={required}
-        className="form-control"
-      >
-        <option value="">Seleccione una especialidad</option>
-        {especialidades.map((especialidad) => (
-          <option key={especialidad.codigo} value={especialidad.codigo}>
-            {especialidad.nombre}
-          </option>
-        ))}
-      </select>
-    </div>
+    <select
+      onChange={(e) => onEspecialidadChange && onEspecialidadChange(e.target.value)}
+      className="w-full p-2 border border-gray-300 rounded"
+      required
+    >
+      <option value="">Seleccione una especialidad</option>
+      {especialidades.map((especialidad) => (
+        <option key={especialidad.codigo} value={especialidad.codigo}>
+          {especialidad.nombre}
+        </option>
+      ))}
+    </select>
   );
 };
 

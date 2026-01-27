@@ -168,9 +168,6 @@ const AgendarCita = () => {
             <FaHeartbeat className="title-icon" />
             <h1>Agendamiento de Citas Médicas</h1>
           </div>
-          <p className="subtitle">
-            <FaShieldAlt /> Sistema para pacientes no contributivos
-          </p>
         </div>
 
         <form ref={formRef} onSubmit={handleSubmit} className="cita-form">
@@ -226,7 +223,6 @@ const AgendarCita = () => {
             </h2>
             
             <div className="form-group">
-              <label>Especialidad Médica <span className="required">*</span></label>
               <SelectEspecialidad
                 onEspecialidadChange={setEspecialidadCodigo}
                 value={especialidadCodigo}

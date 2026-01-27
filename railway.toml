@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npx serve@latest dist -s"
+healthcheckPath = "/"
+
+[build.environment]
+NODE_ENV = "production"

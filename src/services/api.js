@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-// URL base - Vite usa import.meta.env
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// ✅ CAMBIA ESTA URL por la de tu Railway
+const API_URL = 'https://citas-backend-production-3949.up.railway.app';
+
+// Para desarrollo futuro, puedes usar variables de entorno:
+// const API_URL = import.meta.env.VITE_API_URL || 'https://citas-backend-production-3949.up.railway.app';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -10,33 +13,28 @@ const api = axios.create({
   },
 });
 
-// Función para obtener especialidades
 export const obtenerEspecialidades = async () => {
   try {
+    console.log('📡 Conectando a:', API_URL + '/api/especialidades');
     const response = await api.get('/api/especialidades');
+    console.log('✅ Respuesta recibida:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error al obtener especialidades:', error);
+    console.error('❌ Error al obtener especialidades:', error.message);
+    console.error('URL intentada:', API_URL + '/api/especialidades');
     throw error;
   }
 };
 
-// Función para crear una cita
 export const crearCita = async (datosCita, archivoPDF) => {
   try {
-    // Usar FormData para enviar archivo
     const formData = new FormData();
-    
-    // Agregar todos los campos del formulario
     Object.keys(datosCita).forEach(key => {
       formData.append(key, datosCita[key]);
     });
-    
-    // Agregar el archivo PDF
     formData.append('orden_pdf', archivoPDF);
     
-    // Enviar con headers multipart/form-data
-    const response = await api.post('/api/citas', formData, {
+    const response = await axios.post(API_URL + '/api/citas', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -49,5 +47,4 @@ export const crearCita = async (datosCita, archivoPDF) => {
   }
 };
 
-// Exportar por si necesitas la instancia directamente
 export default api;

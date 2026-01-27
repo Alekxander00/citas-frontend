@@ -1,35 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  FaUser, 
-  FaStethoscope, 
-  FaCalendarAlt, 
-  FaFilePdf,
-  FaPhone,
-  FaIdCard,
-  FaCheck,
-  FaExclamationTriangle,
-  FaUpload,
-  FaTrash,
-  FaClock,
-  FaInfoCircle,
-  FaShieldAlt,
   FaHeartbeat,
-  FaEnvelope,
-  FaMapMarkerAlt,
-  FaHeart  // ← IMPORTANTE: Agregar esto
+  FaShieldAlt,
+  FaInfoCircle
 } from 'react-icons/fa';
-import InputNumerico from '../components/InputNumerico';
-import SelectIdentificacion from '../components/SelectIdentificacion';
-import SelectEspecialidad from '../components/SelectEspecialidad';
-import SelectDisponibilidad from '../components/SelectDisponibilidad';
-import FileUpload from '../components/FileUpload';
+
+// Importar componentes de pasos
+import Paso1DatosPersonales from './Paso1DatosPersonales';
+import Paso2InformacionMedica from './Paso2InformacionMedica';
+import Paso3Disponibilidad from './Paso3Disponibilidad';
+import Paso4Documentacion from './Paso4Documentacion';
+import Paso5Resumen from './Paso5Resumen';
+import WizardNavigation from '../components/WizardNavigation';
 import AnimatedBackground from '../components/AnimatedBackground';
-import { crearCita } from '../services/api';
-import '../App.css';
 import Footer from '../components/Footer';
+import { crearCita, obtenerEspecialidades } from '../services/api';
+import '../App.css';
 
 const AgendarCita = () => {
-  // Estados para los campos del formulario
+  // Estados para el formulario
   const [tipoIdentificacion, setTipoIdentificacion] = useState('');
   const [numeroIdentificacion, setNumeroIdentificacion] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -38,13 +27,79 @@ const AgendarCita = () => {
   const [jornada, setJornada] = useState('');
   const [archivo, setArchivo] = useState(null);
   
-  // Estados para la respuesta y errores
+  // Estados para el wizard
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 5;
+  
+  // Estados para la respuesta
   const [mensajeExito, setMensajeExito] = useState('');
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   
-  const formRef = useRef(null);
+  // Estados para PDF y especialidades
+  const [codigoCita, setCodigoCita] = useState(null);
+  const [descargandoPDF, setDescargandoPDF] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState('');
+  const [especialidades, setEspecialidades] = useState([]);
+  
+  const API_URL = import.meta.env.VITE_API_URL || 'https://citas-backend-production-3949.up.railway.app';
+
+  // Cargar especialidades al inicio
+  useEffect(() => {
+    const cargarEspecialidades = async () => {
+      try {
+        const data = await obtenerEspecialidades();
+        if (data && data.especialidades) {
+          setEspecialidades(data.especialidades);
+        }
+      } catch (err) {
+        console.error('Error cargando especialidades:', err);
+      }
+    };
+    
+    cargarEspecialidades();
+  }, []);
+
+  // Validar paso actual
+  const isValidStep = () => {
+    switch (currentStep) {
+      case 1:
+        return tipoIdentificacion && 
+               numeroIdentificacion && numeroIdentificacion.length >= 5 && 
+               telefono && telefono.length >= 7;
+      case 2:
+        return especialidadCodigo;
+      case 3:
+        return diaSemana && jornada;
+      case 4:
+        return archivo;
+      case 5:
+        return true; // El resumen siempre es válido
+      default:
+        return false;
+    }
+  };
+
+  // Navegación
+  const handleNext = () => {
+    if (currentStep < totalSteps && isValidStep()) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleEditStep = (step) => {
+    setCurrentStep(step);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Función para generar confeti
   const ConfettiEffect = () => {
@@ -69,70 +124,32 @@ const AgendarCita = () => {
     );
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Enviar formulario
+  const handleSubmit = async () => {
     setError('');
     setMensajeExito('');
-    
-    // Validaciones básicas
-    if (!tipoIdentificacion) {
-      setError('Por favor seleccione un tipo de identificación');
-      return;
-    }
-    
-    if (!numeroIdentificacion || numeroIdentificacion.length < 5) {
-      setError('El número de identificación debe tener al menos 5 dígitos');
-      return;
-    }
-    
-    if (!telefono || telefono.length < 7) {
-      setError('El teléfono debe tener al menos 7 dígitos');
-      return;
-    }
-    
-    if (!especialidadCodigo) {
-      setError('Por favor seleccione una especialidad médica');
-      return;
-    }
-    
-    if (!diaSemana) {
-      setError('Por favor seleccione un día de la semana');
-      return;
-    }
-    
-    if (!jornada) {
-      setError('Por favor seleccione una jornada');
-      return;
-    }
-    
-    if (!archivo) {
-      setError('Debe seleccionar un archivo PDF.');
-      return;
-    }
-
-    // Crear FormData para enviar al backend
-    const formData = new FormData();
-    formData.append('tipo_identificacion', tipoIdentificacion);
-    formData.append('numero_identificacion', numeroIdentificacion);
-    formData.append('telefono', telefono);
-    formData.append('especialidad_codigo', especialidadCodigo);
-    formData.append('dia_semana', diaSemana);
-    formData.append('jornada', jornada);
-    formData.append('orden_pdf', archivo);
+    setCargando(true);
 
     try {
-      setCargando(true);
+      const formData = new FormData();
+      formData.append('tipo_identificacion', tipoIdentificacion);
+      formData.append('numero_identificacion', numeroIdentificacion);
+      formData.append('telefono', telefono);
+      formData.append('especialidad_codigo', especialidadCodigo);
+      formData.append('dia_semana', diaSemana);
+      formData.append('jornada', jornada);
+      formData.append('orden_pdf', archivo);
+
       const respuesta = await crearCita(formData);
       
-      // Mostrar mensaje de éxito con confeti
       setMensajeExito(respuesta.mensaje || 'Su solicitud de cita ha sido registrada correctamente. En los próximos días será contactado telefónicamente para confirmar la fecha y hora exactas de su cita.');
+      setCodigoCita(respuesta.codigo_cita || respuesta.data?.codigo_cita);
       setShowConfetti(true);
       
-      // Limpiar el formulario después de 5 segundos
-      setTimeout(() => {
-        resetForm();
-        setShowConfetti(false);
-      }, 5000);
+      if (respuesta.codigo_cita) {
+        const url = `${API_URL}/api/citas/${respuesta.codigo_cita}/orden`;
+        setDownloadUrl(url);
+      }
       
     } catch (err) {
       console.error('Error al crear la cita:', err);
@@ -142,6 +159,22 @@ const AgendarCita = () => {
     }
   };
 
+  // Descargar PDF
+  const handleDescargarPDF = async () => {
+    if (!codigoCita) return;
+    
+    try {
+      setDescargandoPDF(true);
+      await descargarOrdenPDF(codigoCita);
+    } catch (error) {
+      console.error('Error al descargar PDF:', error);
+      setError('Error al descargar el PDF. Intente hacer clic en el enlace manualmente.');
+    } finally {
+      setDescargandoPDF(false);
+    }
+  };
+
+  // Resetear formulario
   const resetForm = () => {
     setTipoIdentificacion('');
     setNumeroIdentificacion('');
@@ -150,11 +183,12 @@ const AgendarCita = () => {
     setDiaSemana('');
     setJornada('');
     setArchivo(null);
+    setCurrentStep(1);
+    setCodigoCita(null);
+    setDownloadUrl('');
     setError('');
     setMensajeExito('');
-    if (formRef.current) {
-      formRef.current.reset();
-    }
+    setShowConfetti(false);
   };
 
   return (
@@ -162,136 +196,113 @@ const AgendarCita = () => {
       <AnimatedBackground />
       <ConfettiEffect />
       
-      <div className="agendar-cita-container">
+      <div className="agendar-cita-container wizard-container">
+        {/* Header */}
         <div className="header-section">
           <div className="title-container">
             <FaHeartbeat className="title-icon" />
             <h1>Agendamiento de Citas Médicas</h1>
           </div>
+          <p className="subtitle">
+            <FaShieldAlt /> Sistema para pacientes no contributivos
+          </p>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="cita-form">
-          {/* Sección 1: Datos Personales */}
-          <div className="form-section">
-            <h2>
-              <FaUser className="section-icon" /> 
-              Datos Personales
-            </h2>
-            
-            <SelectIdentificacion
-              value={tipoIdentificacion}
-              onChange={(e) => setTipoIdentificacion(e.target.value)}
-              required={true}
+        {/* Wizard Navigation */}
+        <WizardNavigation
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          onSubmit={handleSubmit}
+          isValidStep={isValidStep()}
+          isSubmitting={cargando}
+          showSubmit={currentStep === totalSteps}
+        />
+
+        {/* Steps Content */}
+        <div className="wizard-content">
+          {currentStep === 1 && (
+            <Paso1DatosPersonales
+              tipoIdentificacion={tipoIdentificacion}
+              setTipoIdentificacion={setTipoIdentificacion}
+              numeroIdentificacion={numeroIdentificacion}
+              setNumeroIdentificacion={setNumeroIdentificacion}
+              telefono={telefono}
+              setTelefono={setTelefono}
             />
+          )}
 
-            <InputNumerico
-              label={
-                <>
-                  <FaIdCard /> Número de Identificación
-                </>
-              }
-              name="numero_identificacion"
-              value={numeroIdentificacion}
-              onChange={(e) => setNumeroIdentificacion(e.target.value)}
-              required={true}
-              minLength="5"
-              maxLength="20"
-              placeholder="Ej: 1234567890"
+          {currentStep === 2 && (
+            <Paso2InformacionMedica
+              especialidadCodigo={especialidadCodigo}
+              setEspecialidadCodigo={setEspecialidadCodigo}
             />
+          )}
 
-            <InputNumerico
-              label={
-                <>
-                  <FaPhone /> Teléfono de Contacto
-                </>
-              }
-              name="telefono"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              required={true}
-              minLength="7"
-              maxLength="15"
-              placeholder="Ej: 3001234567"
-            />
-          </div>
-
-          {/* Sección 2: Información Médica */}
-          <div className="form-section">
-            <h2>
-              <FaStethoscope className="section-icon" /> 
-              Información Médica
-            </h2>
-            
-            <div className="form-group">
-              <SelectEspecialidad
-                onEspecialidadChange={setEspecialidadCodigo}
-                value={especialidadCodigo}
-              />
-              <small className="form-text">
-                Seleccione la especialidad médica que necesita
-              </small>
-            </div>
-          </div>
-
-          {/* Sección 3: Disponibilidad */}
-          <div className="form-section">
-            <h2>
-              <FaCalendarAlt className="section-icon" /> 
-              Disponibilidad
-            </h2>
-            
-            <div className="info-box">
-              <FaInfoCircle className="info-icon" />
-              <p>
-                Seleccione su disponibilidad para la cita. <strong>Será contactado telefónicamente</strong> para confirmar la fecha y hora exactas.
-              </p>
-            </div>
-            
-            <SelectDisponibilidad
+          {currentStep === 3 && (
+            <Paso3Disponibilidad
               diaSemana={diaSemana}
               setDiaSemana={setDiaSemana}
               jornada={jornada}
               setJornada={setJornada}
             />
-          </div>
+          )}
 
-          {/* Sección 4: Documentación */}
-          <div className="form-section">
-            <h2>
-              <FaFilePdf className="section-icon" /> 
-              Documentación
-            </h2>
-            
-            <div className="info-box">
-              <FaInfoCircle className="info-icon" />
-              <p>
-                <strong>Importante:</strong> Suba la orden o autorización médica en formato PDF.
-                Este documento es necesario para procesar su solicitud.
-              </p>
-            </div>
-            
-            <FileUpload
+          {currentStep === 4 && (
+            <Paso4Documentacion
               archivo={archivo}
               setArchivo={setArchivo}
-              error={error && error.includes('archivo') ? error : ''}
+              error={error}
             />
-            
-            {archivo && (
-              <div className="file-success">
-                <FaCheck className="success-icon" />
-                <span>Archivo listo para enviar: <strong>{archivo.name}</strong></span>
-              </div>
-            )}
-          </div>
+          )}
 
-          {/* Alertas de éxito y error */}
+          {currentStep === 5 && (
+            <Paso5Resumen
+              tipoIdentificacion={tipoIdentificacion}
+              numeroIdentificacion={numeroIdentificacion}
+              telefono={telefono}
+              especialidadCodigo={especialidadCodigo}
+              especialidades={especialidades}
+              diaSemana={diaSemana}
+              jornada={jornada}
+              archivo={archivo}
+              onEditStep={handleEditStep}
+            />
+          )}
+
+          {/* Alertas */}
           {mensajeExito && (
-            <div className="alert alert-success">
+            <div className="alert alert-success success-alert">
               <div className="alert-content">
-                <FaCheck className="alert-icon" />
-                <div>
+                <FaInfoCircle className="alert-icon" />
+                <div className="alert-details">
                   <h3>¡Solicitud Registrada Exitosamente!</h3>
                   <p>{mensajeExito}</p>
+                  
+                  {codigoCita && (
+                    <div className="download-section">
+                      <p><strong>Código de cita:</strong> {codigoCita}</p>
+                      {downloadUrl && (
+                        <a 
+                          href={downloadUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="btn btn-download"
+                        >
+                          Descargar Orden PDF
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  
+                  <button
+                    type="button"
+                    className="btn btn-new-request"
+                    onClick={resetForm}
+                  >
+                    Nueva Solicitud
+                  </button>
                 </div>
               </div>
             </div>
@@ -300,90 +311,26 @@ const AgendarCita = () => {
           {error && (
             <div className="alert alert-error">
               <div className="alert-content">
-                <FaExclamationTriangle className="alert-icon" />
+                <FaInfoCircle className="alert-icon" />
                 <div>
-                  <h3>Error en el formulario</h3>
+                  <h3>Error</h3>
                   <p>{error}</p>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Botones de acción */}
-          <div className="form-actions">
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={cargando}
-            >
-              {cargando ? (
-                <>
-                  <span className="loading-spinner"></span>
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <FaCheck /> Agendar Cita
-                </>
-              )}
-            </button>
-            
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={resetForm}
-              disabled={cargando}
-            >
-              <FaTrash /> Limpiar Formulario
-            </button>
-          </div>
-        </form>
-
-        {/* Información importante */}
-        <div className="info-container">
-          <div className="info-header">
-            <FaInfoCircle className="info-header-icon" />
-            <h3>Información importante para pacientes</h3>
-          </div>
-          
-          <div className="info-grid">
-            <div className="info-item">
-              <div className="info-icon-container">
-                <FaUser />
-              </div>
-              <h4>Sin registro</h4>
-              <p>No se requiere registro previo ni correo electrónico</p>
-            </div>
-            
-            <div className="info-item">
-              <div className="info-icon-container">
-                <FaPhone />
-              </div>
-              <h4>Contacto telefónico</h4>
-              <p>Será contactado en los próximos días para confirmar</p>
-            </div>
-            
-            <div className="info-item">
-              <div className="info-icon-container">
-                <FaFilePdf />
-              </div>
-              <h4>Documentación</h4>
-              <p>El archivo PDF debe ser legible y no exceder 15 MB</p>
-            </div>
-            
-            <div className="info-item">
-              <div className="info-icon-container">
-                <FaClock />
-              </div>
-              <h4>Horario confirmado</h4>
-              <p>El horario exacto será definido por el personal médico</p>
-            </div>
-          </div>
         </div>
 
-        {/* Footer */}
+        {/* Información adicional */}
+        <div className="wizard-info">
+          <FaInfoCircle className="wizard-info-icon" />
+          <p>
+            <strong>Recuerde:</strong> Este es un sistema para pacientes no contributivos. 
+            No se requiere registro previo. Será contactado telefónicamente para confirmar su cita.
+          </p>
+        </div>
+
         <Footer />
-        
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerEspecialidades } from '../services/api';
 
-const SelectEspecialidad = ({ value, onChange, required }) => {
+const SelectEspecialidad = ({ onEspecialidadChange, value }) => {
   const [especialidades, setEspecialidades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,26 +13,24 @@ const SelectEspecialidad = ({ value, onChange, required }) => {
         const data = await obtenerEspecialidades();
         console.log('📊 Datos recibidos:', data);
         
-        // IMPORTANTE: Ajusta según la estructura real de tu API
-        // Si tu API devuelve { especialidades: [...] } usa data.especialidades
-        // Si devuelve { data: [...] } usa data.data
-        // Si devuelve directamente un array, usa data directamente
-        
+        // Ajustar según la estructura real de tu API
         let especialidadesData = [];
         
         if (data && data.especialidades) {
-          // Caso 1: { especialidades: [...] }
+          // Caso: { especialidades: [...] }
           especialidadesData = data.especialidades;
         } else if (data && data.data) {
-          // Caso 2: { data: [...] }
+          // Caso: { data: [...] }
           especialidadesData = data.data;
         } else if (Array.isArray(data)) {
-          // Caso 3: Array directo
+          // Caso: Array directo
           especialidadesData = data;
+        } else if (data && data.success && data.especialidades) {
+          // Caso: { success: true, especialidades: [...] }
+          especialidadesData = data.especialidades;
         } else {
-          // Caso 4: Otro formato
           console.warn('Formato de datos inesperado:', data);
-          especialidadesData = data || [];
+          especialidadesData = [];
         }
         
         console.log('✅ Especialidades procesadas:', especialidadesData);
@@ -47,6 +45,8 @@ const SelectEspecialidad = ({ value, onChange, required }) => {
           { codigo: 1, nombre: 'Medicina General' },
           { codigo: 2, nombre: 'Pediatría' },
           { codigo: 3, nombre: 'Ginecología' },
+          { codigo: 4, nombre: 'Cardiología' },
+          { codigo: 5, nombre: 'Dermatología' },
         ]);
       } finally {
         setLoading(false);
@@ -56,49 +56,55 @@ const SelectEspecialidad = ({ value, onChange, required }) => {
     fetchEspecialidades();
   }, []);
 
+  const handleChange = (e) => {
+    const selectedValue = e.target.value;
+    console.log('🔽 Especialidad seleccionada:', selectedValue);
+    if (onEspecialidadChange) {
+      onEspecialidadChange(selectedValue);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="form-group">
-        <label>Especialidad Médica <span className="required">*</span></label>
-        <div className="loading">Cargando especialidades...</div>
-      </div>
+      <select className="form-control" disabled>
+        <option>Cargando especialidades...</option>
+      </select>
     );
   }
 
   if (error) {
     return (
-      <div className="form-group">
-        <label>Especialidad Médica <span className="required">*</span></label>
-        <div className="error-message">{error}</div>
-        <select className="form-control" disabled>
-          <option>No se pudieron cargar las especialidades</option>
-        </select>
-      </div>
+      <select className="form-control" disabled>
+        <option>Error al cargar las especialidades</option>
+      </select>
+    );
+  }
+
+  if (especialidades.length === 0) {
+    return (
+      <select className="form-control" disabled>
+        <option>No hay especialidades disponibles</option>
+      </select>
     );
   }
 
   return (
-    <div className="form-group">
-      <label htmlFor="especialidad">Especialidad Médica <span className="required">*</span></label>
-      <select
-        id="especialidad"
-        name="especialidad"
-        value={value}
-        onChange={(e) => onChange && onChange(e.target.value)}
-        required={required}
-        className="form-control"
-      >
-        <option value="">Seleccione una especialidad</option>
-        {especialidades.map((especialidad) => (
-          <option key={especialidad.codigo} value={especialidad.codigo}>
-            {especialidad.nombre}
-          </option>
-        ))}
-      </select>
-      <small className="form-text">
-        {especialidades.length} especialidades disponibles
-      </small>
-    </div>
+    <select
+      className="form-control"
+      value={value}
+      onChange={handleChange}
+      required
+    >
+      <option value="">Seleccione una especialidad</option>
+      {especialidades.map((especialidad) => (
+        <option 
+          key={especialidad.codigo} 
+          value={especialidad.codigo}
+        >
+          {especialidad.nombre}
+        </option>
+      ))}
+    </select>
   );
 };
 

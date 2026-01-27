@@ -1,74 +1,45 @@
 import axios from 'axios';
 
-// ✅ CAMBIA ESTA URL según tu entorno
+// URL base de la API
 const API_URL = import.meta.env.VITE_API_URL || 'https://citas-backend-production-3949.up.railway.app';
-
-// Crear instancia de axios con configuración base
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: 10000, // 10 segundos timeout
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Interceptor para logging
-api.interceptors.request.use(
-  (config) => {
-    console.log(`📤 ${config.method?.toUpperCase()} a: ${config.baseURL}${config.url}`);
-    return config;
-  },
-  (error) => {
-    console.error('❌ Error en solicitud:', error);
-    return Promise.reject(error);
-  }
-);
-
-// Interceptor para respuestas
-api.interceptors.response.use(
-  (response) => {
-    console.log(`✅ Respuesta recibida de ${response.config.url}:`, response.status);
-    return response;
-  },
-  (error) => {
-    console.error(`❌ Error en respuesta de ${error.config?.url}:`, error.message);
-    
-    if (error.response) {
-      console.error('📊 Datos del error:', error.response.data);
-      console.error('🔢 Status:', error.response.status);
-    } else if (error.request) {
-      console.error('🌐 No se recibió respuesta del servidor');
-    }
-    
-    return Promise.reject(error);
-  }
-);
 
 // Obtener especialidades
 export const obtenerEspecialidades = async () => {
   try {
-    console.log('🔄 Iniciando solicitud de especialidades...');
-    const response = await api.get('/api/especialidades');
+    console.log('🔄 Solicitando especialidades desde:', `${API_URL}/api/especialidades`);
     
-    console.log('📊 Respuesta completa:', response);
-    console.log('📦 Datos:', response.data);
+    const response = await axios.get(`${API_URL}/api/especialidades`, {
+      timeout: 10000,
+    });
     
+    console.log('✅ Respuesta de especialidades:', response.data);
     return response.data;
-  } catch (error) {
-    console.error('💥 Error crítico al obtener especialidades:', error);
     
-    // Para desarrollo, devolver datos de prueba
+  } catch (error) {
+    console.error('❌ Error al obtener especialidades:', error);
+    
+    // Datos de respaldo para desarrollo
     if (import.meta.env.DEV) {
-      console.warn('⚠️  Usando datos de prueba para desarrollo');
+      console.log('⚠️  Usando datos de prueba para desarrollo');
       return {
         success: true,
-        cantidad: 5,
+        cantidad: 15,
         especialidades: [
           { codigo: 1, nombre: 'Medicina General' },
           { codigo: 2, nombre: 'Pediatría' },
           { codigo: 3, nombre: 'Ginecología' },
           { codigo: 4, nombre: 'Cardiología' },
           { codigo: 5, nombre: 'Dermatología' },
+          { codigo: 6, nombre: 'Ortopedia' },
+          { codigo: 7, nombre: 'Oftalmología' },
+          { codigo: 8, nombre: 'Odontología' },
+          { codigo: 9, nombre: 'Psicología' },
+          { codigo: 10, nombre: 'Nutrición' },
+          { codigo: 11, nombre: 'Endocrinología' },
+          { codigo: 12, nombre: 'Gastroenterología' },
+          { codigo: 13, nombre: 'Neurología' },
+          { codigo: 14, nombre: 'Urología' },
+          { codigo: 15, nombre: 'Traumatología' }
         ]
       };
     }
@@ -80,7 +51,7 @@ export const obtenerEspecialidades = async () => {
 // Crear cita
 export const crearCita = async (formData) => {
   try {
-    console.log('📤 Enviando datos de cita...', formData);
+    console.log('📤 Enviando datos de cita...');
     
     const response = await axios.post(`${API_URL}/api/citas`, formData, {
       headers: {
@@ -109,4 +80,7 @@ export const crearCita = async (formData) => {
   }
 };
 
-export default api;
+export default {
+  obtenerEspecialidades,
+  crearCita
+};

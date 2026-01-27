@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './AnimatedBackground.css';
 
 const AnimatedBackground = () => {
@@ -6,8 +6,17 @@ const AnimatedBackground = () => {
   const particlesRef = useRef([]);
   const mouseRef = useRef({ x: 0, y: 0, radius: 80 });
   const animationRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Detectar si es móvil
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -19,47 +28,53 @@ const AnimatedBackground = () => {
     canvas.width = width;
     canvas.height = height;
 
-    // Clase para partículas normales
+    // Optimizar para rendimiento en móviles
+    const particleCount = isMobile ? 
+      Math.min(Math.floor(width * height / 10000), 80) : 
+      Math.min(Math.floor(width * height / 8000), 150);
+
+    // Clase para partículas
     class Particle {
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedX = (Math.random() * 1 - 0.5) * 0.3; // Movimiento más lento
-        this.speedY = (Math.random() * 1 - 0.5) * 0.3;
+        this.size = isMobile ? (Math.random() * 1.5 + 0.5) : (Math.random() * 2 + 0.5);
+        this.speedX = (Math.random() * 1 - 0.5) * (isMobile ? 0.2 : 0.3);
+        this.speedY = (Math.random() * 1 - 0.5) * (isMobile ? 0.2 : 0.3);
         this.color = `rgba(100, 180, 255, ${Math.random() * 0.4 + 0.2})`;
-        this.depth = Math.random(); // Profundidad para efecto 3D
+        this.depth = Math.random();
         this.waveOffset = Math.random() * Math.PI * 2;
       }
 
       update() {
-        // Movimiento natural con ondas suaves
-        this.x += this.speedX + Math.sin(Date.now() * 0.001 + this.waveOffset) * 0.1;
-        this.y += this.speedY + Math.cos(Date.now() * 0.001 + this.waveOffset) * 0.1;
+        // Movimiento optimizado para móviles
+        const waveIntensity = isMobile ? 0.05 : 0.1;
+        this.x += this.speedX + Math.sin(Date.now() * 0.001 + this.waveOffset) * waveIntensity;
+        this.y += this.speedY + Math.cos(Date.now() * 0.001 + this.waveOffset) * waveIntensity;
 
-        // Rebote suave en los bordes
+        // Rebote suave
         if (this.x > width) this.x = 0;
         if (this.x < 0) this.x = width;
         if (this.y > height) this.y = 0;
         if (this.y < 0) this.y = height;
 
-        // Interacción muy suave con el mouse
-        const dx = mouseRef.current.x - this.x;
-        const dy = mouseRef.current.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < mouseRef.current.radius) {
-          const angle = Math.atan2(dy, dx);
-          const force = (mouseRef.current.radius - distance) / mouseRef.current.radius;
+        // Interacción con mouse (deshabilitada en móviles táctiles)
+        if (!isMobile) {
+          const dx = mouseRef.current.x - this.x;
+          const dy = mouseRef.current.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
           
-          // Movimiento más suave alejándose del mouse
-          this.x -= Math.cos(angle) * force * 2;
-          this.y -= Math.sin(angle) * force * 2;
+          if (distance < mouseRef.current.radius) {
+            const angle = Math.atan2(dy, dx);
+            const force = (mouseRef.current.radius - distance) / mouseRef.current.radius;
+            
+            this.x -= Math.cos(angle) * force * 2;
+            this.y -= Math.sin(angle) * force * 2;
+          }
         }
       }
 
       draw() {
-        // Partícula más pequeña según profundidad
         const drawSize = this.size * (0.5 + this.depth * 0.5);
         ctx.fillStyle = this.color;
         ctx.beginPath();
@@ -68,74 +83,27 @@ const AnimatedBackground = () => {
       }
     }
 
-    // Clase para partículas de fondo (estrellas profundas)
-    class DeepParticle {
-      constructor() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        this.size = Math.random() * 0.8 + 0.2;
-        this.speedX = (Math.random() * 0.4 - 0.2) * 0.1; // Muy lentas
-        this.speedY = (Math.random() * 0.4 - 0.2) * 0.1;
-        this.color = `rgba(60, 100, 180, ${Math.random() * 0.2 + 0.1})`;
-        this.depth = Math.random() * 0.5; // Más en el fondo
-        this.twinkleSpeed = Math.random() * 0.01 + 0.005;
-        this.twinkleOffset = Math.random() * Math.PI * 2;
-      }
-
-      update() {
-        // Movimiento muy lento
-        this.x += this.speedX;
-        this.y += this.speedY;
-
-        // Bucle continuo
-        if (this.x > width) this.x = 0;
-        if (this.x < 0) this.x = width;
-        if (this.y > height) this.y = 0;
-        if (this.y < 0) this.y = height;
-      }
-
-      draw() {
-        // Efecto de brillo intermitente suave
-        const alpha = 0.1 + (Math.sin(Date.now() * this.twinkleSpeed + this.twinkleOffset) * 0.1 + 0.1);
-        ctx.fillStyle = `rgba(100, 150, 255, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size * (1 + this.depth), 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // Crear partículas normales y de fondo
+    // Inicializar partículas
     const initParticles = () => {
       particlesRef.current = [];
-      
-      // Partículas normales (más cerca)
-      const normalCount = Math.min(Math.floor(width * height / 6000), 200);
-      for (let i = 0; i < normalCount; i++) {
+      for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push(new Particle());
-      }
-      
-      // Partículas de fondo (estrellas profundas)
-      const deepCount = Math.min(Math.floor(width * height / 4000), 300);
-      for (let i = 0; i < deepCount; i++) {
-        particlesRef.current.push(new DeepParticle());
       }
     };
 
-    // Función para dibujar conexiones entre partículas cercanas
+    // Dibujar conexiones (solo en desktop)
     const drawConnections = () => {
-      // Solo buscar conexiones entre partículas normales
-      const normalParticles = particlesRef.current.filter(p => p instanceof Particle);
+      if (isMobile) return; // No dibujar conexiones en móviles para mejor rendimiento
       
-      for (let i = 0; i < normalParticles.length; i++) {
-        for (let j = i + 1; j < normalParticles.length; j++) {
-          const p1 = normalParticles[i];
-          const p2 = normalParticles[j];
+      for (let i = 0; i < particlesRef.current.length; i++) {
+        for (let j = i + 1; j < particlesRef.current.length; j++) {
+          const p1 = particlesRef.current[i];
+          const p2 = particlesRef.current[j];
           
           const dx = p1.x - p2.x;
           const dy = p1.y - p2.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          // Solo conectar si están relativamente cerca y tienen profundidad similar
           if (distance < 120 && Math.abs(p1.depth - p2.depth) < 0.3) {
             const alpha = (1 - distance / 120) * 0.2;
             ctx.strokeStyle = `rgba(100, 180, 255, ${alpha})`;
@@ -149,42 +117,32 @@ const AnimatedBackground = () => {
       }
     };
 
-    // Función de animación
+    // Función de animación optimizada
     const animate = () => {
-      // Fondo azul oscuro con gradiente
-      const gradient = ctx.createLinearGradient(0, 0, 0, height);
-      gradient.addColorStop(0, '#0a1128'); // Azul muy oscuro arriba
-      gradient.addColorStop(0.5, '#0c1445'); // Azul oscuro medio
-      gradient.addColorStop(1, '#081020'); // Azul casi negro abajo
-      ctx.fillStyle = gradient;
+      // Fondo fijo para mejor rendimiento
+      ctx.fillStyle = '#0a1128';
       ctx.fillRect(0, 0, width, height);
 
-      // Dibujar partículas de fondo primero
+      // Actualizar y dibujar partículas
       particlesRef.current.forEach(particle => {
-        if (particle instanceof DeepParticle) {
-          particle.update();
-          particle.draw();
-        }
+        particle.update();
+        particle.draw();
       });
 
-      // Dibujar conexiones entre partículas normales
-      drawConnections();
-
-      // Dibujar partículas normales encima
-      particlesRef.current.forEach(particle => {
-        if (particle instanceof Particle) {
-          particle.update();
-          particle.draw();
-        }
-      });
+      // Dibujar conexiones solo si no es móvil
+      if (!isMobile) {
+        drawConnections();
+      }
 
       animationRef.current = requestAnimationFrame(animate);
     };
 
     // Event listeners
     const handleMouseMove = (e) => {
-      mouseRef.current.x = e.clientX;
-      mouseRef.current.y = e.clientY;
+      if (!isMobile) {
+        mouseRef.current.x = e.clientX;
+        mouseRef.current.y = e.clientY;
+      }
     };
 
     const handleResize = () => {
@@ -192,7 +150,15 @@ const AnimatedBackground = () => {
       height = window.innerHeight;
       canvas.width = width;
       canvas.height = height;
+      checkMobile();
       initParticles();
+    };
+
+    const handleTouchMove = (e) => {
+      if (isMobile && e.touches[0]) {
+        mouseRef.current.x = e.touches[0].clientX;
+        mouseRef.current.y = e.touches[0].clientY;
+      }
     };
 
     // Inicializar
@@ -200,7 +166,10 @@ const AnimatedBackground = () => {
     animate();
 
     // Agregar event listeners
-    window.addEventListener('mousemove', handleMouseMove);
+    if (!isMobile) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('resize', handleResize);
 
     // Limpieza
@@ -209,9 +178,11 @@ const AnimatedBackground = () => {
         cancelAnimationFrame(animationRef.current);
       }
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', checkMobile);
     };
-  }, []);
+  }, [isMobile]);
 
   return <canvas ref={canvasRef} className="animated-background" />;
 };

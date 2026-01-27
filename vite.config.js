@@ -5,28 +5,21 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3001,
-    proxy: {
-      '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:3000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
+    cors: true,
+    host: true
   },
   build: {
     outDir: 'dist',
     sourcemap: false,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          forms: ['react-hook-form'],
-          http: ['axios']
-        }
-      }
-    }
+    // Configuración simplificada para Railway
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+      },
+    },
   },
-  base: '/', // Importante para Railway
+  base: '/',
   preview: {
     port: 3001,
     host: true

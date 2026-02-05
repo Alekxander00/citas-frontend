@@ -203,9 +203,6 @@ const AgendarCita = () => {
             <FaHeartbeat className="title-icon" />
             <h1>Agendamiento de Citas Médicas</h1>
           </div>
-          <p className="subtitle">
-            <FaShieldAlt /> Sistema para pacientes no contributivos
-          </p>
         </div>
 
         {/* Wizard Navigation */}
@@ -325,8 +322,7 @@ const AgendarCita = () => {
         <div className="wizard-info">
           <FaInfoCircle className="wizard-info-icon" />
           <p>
-            <strong>Recuerde:</strong> Este es un sistema para pacientes no contributivos. 
-            No se requiere registro previo. Será contactado telefónicamente para confirmar su cita.
+            <strong>Recuerde:</strong> Este sistema no requiere registro previo. Será contactado telefónicamente para confirmar su cita.
           </p>
         </div>
 

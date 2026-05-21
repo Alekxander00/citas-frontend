@@ -1,7 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  FaUserMd, 
+  FaBaby, 
+  FaVenus, 
+  FaHeartbeat, 
+  FaEye, 
+  FaTooth, 
+  FaBrain, 
+  FaAppleAlt, 
+  FaCheck,
+  FaStethoscope
+} from 'react-icons/fa';
 import { obtenerEspecialidades } from '../services/api';
 
-const SelectEspecialidad = ({ onEspecialidadChange, value }) => {
+// Mapeo de iconos médicos para la tercera edad
+const ICONO_ESPECIALIDAD = {
+  1: FaUserMd,       // Medicina General
+  2: FaBaby,         // Pediatría
+  3: FaVenus,        // Ginecología
+  4: FaHeartbeat,    // Cardiología
+  5: FaStethoscope,  // Dermatología
+  6: FaStethoscope,  // Ortopedia
+  7: FaEye,          // Oftalmología
+  8: FaTooth,        // Odontología
+  9: FaBrain,        // Psicología
+  10: FaAppleAlt,    // Nutrición
+};
+
+const SelectEspecialidad = ({ onEspecialidadChange, value, onAutoAdvance }) => {
   const [especialidades, setEspecialidades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,20 +39,15 @@ const SelectEspecialidad = ({ onEspecialidadChange, value }) => {
         const data = await obtenerEspecialidades();
         console.log('📊 Datos recibidos:', data);
         
-        // Ajustar según la estructura real de tu API
         let especialidadesData = [];
         
         if (data && data.especialidades) {
-          // Caso: { especialidades: [...] }
           especialidadesData = data.especialidades;
         } else if (data && data.data) {
-          // Caso: { data: [...] }
           especialidadesData = data.data;
         } else if (Array.isArray(data)) {
-          // Caso: Array directo
           especialidadesData = data;
         } else if (data && data.success && data.especialidades) {
-          // Caso: { success: true, especialidades: [...] }
           especialidadesData = data.especialidades;
         } else {
           console.warn('Formato de datos inesperado:', data);
@@ -47,6 +68,11 @@ const SelectEspecialidad = ({ onEspecialidadChange, value }) => {
           { codigo: 3, nombre: 'Ginecología' },
           { codigo: 4, nombre: 'Cardiología' },
           { codigo: 5, nombre: 'Dermatología' },
+          { codigo: 6, nombre: 'Ortopedia' },
+          { codigo: 7, nombre: 'Oftalmología' },
+          { codigo: 8, nombre: 'Odontología' },
+          { codigo: 9, nombre: 'Psicología' },
+          { codigo: 10, nombre: 'Nutrición' }
         ]);
       } finally {
         setLoading(false);
@@ -56,55 +82,66 @@ const SelectEspecialidad = ({ onEspecialidadChange, value }) => {
     fetchEspecialidades();
   }, []);
 
-  const handleChange = (e) => {
-    const selectedValue = e.target.value;
-    console.log('🔽 Especialidad seleccionada:', selectedValue);
+  const handleSelect = (codigo) => {
+    console.log('🔽 Especialidad seleccionada:', codigo);
     if (onEspecialidadChange) {
-      onEspecialidadChange(selectedValue);
+      onEspecialidadChange(codigo);
+    }
+    if (onAutoAdvance) {
+      setTimeout(() => {
+        onAutoAdvance();
+      }, 350);
     }
   };
 
   if (loading) {
     return (
-      <select className="form-control" disabled>
-        <option>Cargando especialidades...</option>
-      </select>
+      <div className="especialidades-loading">
+        <span className="loading-spinner"></span>
+        <p>Cargando especialidades médicas...</p>
+      </div>
     );
   }
 
-  if (error) {
+  if (error && especialidades.length === 0) {
     return (
-      <select className="form-control" disabled>
-        <option>Error al cargar las especialidades</option>
-      </select>
-    );
-  }
-
-  if (especialidades.length === 0) {
-    return (
-      <select className="form-control" disabled>
-        <option>No hay especialidades disponibles</option>
-      </select>
+      <div className="especialidades-error">
+        <p>⚠️ No se pudieron cargar las especialidades. Inténtelo de nuevo.</p>
+      </div>
     );
   }
 
   return (
-    <select
-      className="form-control"
-      value={value}
-      onChange={handleChange}
-      required
-    >
-      <option value="">Seleccione una especialidad</option>
-      {especialidades.map((especialidad) => (
-        <option 
-          key={especialidad.codigo} 
-          value={especialidad.codigo}
-        >
-          {especialidad.nombre}
-        </option>
-      ))}
-    </select>
+    <div className="especialidades-grid-wrapper">
+      <p className="label-ayuda">Por favor, toque la especialidad médica que necesita:</p>
+      <div className="especialidades-grid">
+        {especialidades.map((especialidad) => {
+          const isSelected = value == especialidad.codigo;
+          const IconComponent = ICONO_ESPECIALIDAD[especialidad.codigo] || FaStethoscope;
+          
+          return (
+            <button
+              key={especialidad.codigo}
+              type="button"
+              className={`especialidad-card-btn ${isSelected ? 'selected' : ''}`}
+              onClick={() => handleSelect(especialidad.codigo)}
+            >
+              <div className="especialidad-card-content">
+                <div className="especialidad-icon-container">
+                  <IconComponent className="especialidad-icon" />
+                </div>
+                <span className="especialidad-name">{especialidad.nombre}</span>
+                {isSelected && (
+                  <span className="especialidad-check-badge">
+                    <FaCheck />
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 

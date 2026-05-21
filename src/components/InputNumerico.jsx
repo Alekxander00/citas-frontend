@@ -13,7 +13,9 @@ const InputNumerico = ({ label, name, value, onChange, required, minLength, maxL
     <div className="form-group">
       <label htmlFor={name}>{label} {required && <span className="required">*</span>}</label>
       <input
-        type="text"
+        type="tel"
+        inputmode="numeric"
+        pattern="[0-9]*"
         id={name}
         name={name}
         value={value}

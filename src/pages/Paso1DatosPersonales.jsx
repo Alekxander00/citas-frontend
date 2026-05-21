@@ -49,7 +49,7 @@ const Paso1DatosPersonales = ({
         <InputNumerico
           label={
             <>
-              <FaPhone /> Teléfono de Contacto
+              <FaPhone /> Celular (debe tener WhatsApp) 📱
             </>
           }
           name="telefono"
@@ -62,8 +62,8 @@ const Paso1DatosPersonales = ({
         />
       </div>
 
-      <div className="step-info">
-        <p><strong>Importante:</strong> Todos los campos son obligatorios. Sus datos serán protegidos según la ley de protección de datos.</p>
+      <div className="step-info step-info-whatsapp">
+        <p><strong>⚠️ Importante:</strong> Ingrese un número de celular que tenga <strong>WhatsApp activo</strong>. Por ese medio coordinaremos la fecha y hora final de su cita médica con el doctor.</p>
       </div>
     </div>
   );

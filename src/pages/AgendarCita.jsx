@@ -73,7 +73,7 @@ const AgendarCita = () => {
       case 3:
         return diaSemana && jornada;
       case 4:
-        return archivo;
+        return true; // PDF es opcional, por tanto el paso 4 siempre es válido
       case 5:
         return true; // El resumen siempre es válido
       default:
@@ -101,29 +101,6 @@ const AgendarCita = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Función para generar confeti
-  const ConfettiEffect = () => {
-    if (!showConfetti) return null;
-    
-    return (
-      <div className="confetti-container">
-        {[...Array(100)].map((_, i) => (
-          <div 
-            key={i}
-            className="confetti"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 2}s`,
-              backgroundColor: `hsl(${Math.random() * 360}, 100%, 60%)`,
-              width: `${Math.random() * 10 + 5}px`,
-              height: `${Math.random() * 10 + 5}px`,
-            }}
-          />
-        ))}
-      </div>
-    );
-  };
-
   // Enviar formulario
   const handleSubmit = async () => {
     setError('');
@@ -138,39 +115,20 @@ const AgendarCita = () => {
       formData.append('especialidad_codigo', especialidadCodigo);
       formData.append('dia_semana', diaSemana);
       formData.append('jornada', jornada);
-      formData.append('orden_pdf', archivo);
+      if (archivo) {
+        formData.append('orden_pdf', archivo);
+      }
 
       const respuesta = await crearCita(formData);
       
-      setMensajeExito(respuesta.mensaje || 'Su solicitud de cita ha sido registrada correctamente. En los próximos días será contactado telefónicamente para confirmar la fecha y hora exactas de su cita.');
+      setMensajeExito(respuesta.mensaje || 'Su solicitud de cita ha sido registrada correctamente.');
       setCodigoCita(respuesta.codigo_cita || respuesta.data?.codigo_cita);
-      setShowConfetti(true);
-      
-      if (respuesta.codigo_cita) {
-        const url = `${API_URL}/api/citas/${respuesta.codigo_cita}/orden`;
-        setDownloadUrl(url);
-      }
       
     } catch (err) {
       console.error('Error al crear la cita:', err);
       setError(err.error || 'Ocurrió un error al agendar la cita. Por favor, intente nuevamente.');
     } finally {
       setCargando(false);
-    }
-  };
-
-  // Descargar PDF
-  const handleDescargarPDF = async () => {
-    if (!codigoCita) return;
-    
-    try {
-      setDescargandoPDF(true);
-      await descargarOrdenPDF(codigoCita);
-    } catch (error) {
-      console.error('Error al descargar PDF:', error);
-      setError('Error al descargar el PDF. Intente hacer clic en el enlace manualmente.');
-    } finally {
-      setDescargandoPDF(false);
     }
   };
 
@@ -188,13 +146,11 @@ const AgendarCita = () => {
     setDownloadUrl('');
     setError('');
     setMensajeExito('');
-    setShowConfetti(false);
   };
 
   return (
     <div className="app-container">
       <AnimatedBackground />
-      <ConfettiEffect />
       
       <div className="agendar-cita-container wizard-container">
         {/* Header */}
@@ -205,126 +161,131 @@ const AgendarCita = () => {
           </div>
         </div>
 
-        {/* Wizard Navigation */}
-        <WizardNavigation
-          currentStep={currentStep}
-          totalSteps={totalSteps}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          onSubmit={handleSubmit}
-          isValidStep={isValidStep()}
-          isSubmitting={cargando}
-          showSubmit={currentStep === totalSteps}
-        />
+        {mensajeExito ? (
+          /* PANTALLA DE ÉXITO PREMIUM PARA LA TERCERA EDAD */
+          <div className="success-screen-glass animate-fade-in">
+            <div className="checkmark-wrapper">
+              <svg className="success-checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle className="success-checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path className="success-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+              </svg>
+            </div>
+            <h2 className="success-title">¡Cita Solicitada con Éxito!</h2>
+            <p className="success-subtitle">Hemos recibido su solicitud correctamente.</p>
+            
+            <div className="success-steps-box">
+              <p className="success-step-info-text">
+                <strong>📞 ¿Qué sigue ahora?</strong>
+                <br />
+                Nos comunicaremos con usted por <strong>teléfono</strong> o por mensaje de <strong>WhatsApp</strong> para confirmarle el día y la hora exacta de su cita médica con el doctor.
+              </p>
+              
+              {codigoCita && (
+                <p className="success-codigo-cita">
+                  <strong>Código de su solicitud:</strong> <span className="codigo-resaltado">{codigoCita}</span>
+                </p>
+              )}
+            </div>
 
-        {/* Steps Content */}
-        <div className="wizard-content">
-          {currentStep === 1 && (
-            <Paso1DatosPersonales
-              tipoIdentificacion={tipoIdentificacion}
-              setTipoIdentificacion={setTipoIdentificacion}
-              numeroIdentificacion={numeroIdentificacion}
-              setNumeroIdentificacion={setNumeroIdentificacion}
-              telefono={telefono}
-              setTelefono={setTelefono}
+            <button
+              type="button"
+              className="btn btn-new-request-glass"
+              onClick={resetForm}
+            >
+              Pedir Otra Cita Médica
+            </button>
+          </div>
+        ) : (
+          /* FORMULARIO WIZARD ACCESIBLE */
+          <>
+            {/* Wizard Navigation */}
+            <WizardNavigation
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrev={handlePrev}
+              onSubmit={handleSubmit}
+              isValidStep={isValidStep()}
+              isSubmitting={cargando}
+              showSubmit={currentStep === totalSteps}
             />
-          )}
 
-          {currentStep === 2 && (
-            <Paso2InformacionMedica
-              especialidadCodigo={especialidadCodigo}
-              setEspecialidadCodigo={setEspecialidadCodigo}
-            />
-          )}
+            {/* Steps Content */}
+            <div className="wizard-content">
+              {currentStep === 1 && (
+                <Paso1DatosPersonales
+                  tipoIdentificacion={tipoIdentificacion}
+                  setTipoIdentificacion={setTipoIdentificacion}
+                  numeroIdentificacion={numeroIdentificacion}
+                  setNumeroIdentificacion={setNumeroIdentificacion}
+                  telefono={telefono}
+                  setTelefono={setTelefono}
+                />
+              )}
 
-          {currentStep === 3 && (
-            <Paso3Disponibilidad
-              diaSemana={diaSemana}
-              setDiaSemana={setDiaSemana}
-              jornada={jornada}
-              setJornada={setJornada}
-            />
-          )}
+              {currentStep === 2 && (
+                <Paso2InformacionMedica
+                  especialidadCodigo={especialidadCodigo}
+                  setEspecialidadCodigo={setEspecialidadCodigo}
+                  onAutoAdvance={handleNext}
+                />
+              )}
 
-          {currentStep === 4 && (
-            <Paso4Documentacion
-              archivo={archivo}
-              setArchivo={setArchivo}
-              error={error}
-            />
-          )}
+              {currentStep === 3 && (
+                <Paso3Disponibilidad
+                  diaSemana={diaSemana}
+                  setDiaSemana={setDiaSemana}
+                  jornada={jornada}
+                  setJornada={setJornada}
+                  onAutoAdvance={handleNext}
+                />
+              )}
 
-          {currentStep === 5 && (
-            <Paso5Resumen
-              tipoIdentificacion={tipoIdentificacion}
-              numeroIdentificacion={numeroIdentificacion}
-              telefono={telefono}
-              especialidadCodigo={especialidadCodigo}
-              especialidades={especialidades}
-              diaSemana={diaSemana}
-              jornada={jornada}
-              archivo={archivo}
-              onEditStep={handleEditStep}
-            />
-          )}
+              {currentStep === 4 && (
+                <Paso4Documentacion
+                  archivo={archivo}
+                  setArchivo={setArchivo}
+                  error={error}
+                  onAutoAdvance={handleNext}
+                />
+              )}
 
-          {/* Alertas */}
-          {mensajeExito && (
-            <div className="alert alert-success success-alert">
-              <div className="alert-content">
-                <FaInfoCircle className="alert-icon" />
-                <div className="alert-details">
-                  <h3>¡Solicitud Registrada Exitosamente!</h3>
-                  <p>{mensajeExito}</p>
-                  
-                  {codigoCita && (
-                    <div className="download-section">
-                      <p><strong>Código de cita:</strong> {codigoCita}</p>
-                      {downloadUrl && (
-                        <a 
-                          href={downloadUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="btn btn-download"
-                        >
-                          Descargar Orden PDF
-                        </a>
-                      )}
+              {currentStep === 5 && (
+                <Paso5Resumen
+                  tipoIdentificacion={tipoIdentificacion}
+                  numeroIdentificacion={numeroIdentificacion}
+                  telefono={telefono}
+                  especialidadCodigo={especialidadCodigo}
+                  especialidades={especialidades}
+                  diaSemana={diaSemana}
+                  jornada={jornada}
+                  archivo={archivo}
+                  onEditStep={handleEditStep}
+                />
+              )}
+
+              {error && (
+                <div className="alert alert-error">
+                  <div className="alert-content">
+                    <FaInfoCircle className="alert-icon" />
+                    <div>
+                      <h3>Error al procesar solicitud</h3>
+                      <p>{error}</p>
                     </div>
-                  )}
-                  
-                  <button
-                    type="button"
-                    className="btn btn-new-request"
-                    onClick={resetForm}
-                  >
-                    Nueva Solicitud
-                  </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-          )}
 
-          {error && (
-            <div className="alert alert-error">
-              <div className="alert-content">
-                <FaInfoCircle className="alert-icon" />
-                <div>
-                  <h3>Error</h3>
-                  <p>{error}</p>
-                </div>
-              </div>
+            {/* Información adicional */}
+            <div className="wizard-info">
+              <FaInfoCircle className="wizard-info-icon" />
+              <p>
+                <strong>Recuerde:</strong> Este sistema no requiere registro previo. Le llamaremos o escribiremos por WhatsApp para confirmar su cita.
+              </p>
             </div>
-          )}
-        </div>
-
-        {/* Información adicional */}
-        <div className="wizard-info">
-          <FaInfoCircle className="wizard-info-icon" />
-          <p>
-            <strong>Recuerde:</strong> Este sistema no requiere registro previo. Será contactado telefónicamente para confirmar su cita.
-          </p>
-        </div>
+          </>
+        )}
 
         <Footer />
       </div>

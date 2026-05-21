@@ -5,7 +5,8 @@ import FileUpload from '../components/FileUpload';
 const Paso4Documentacion = ({ 
   archivo, 
   setArchivo,
-  error
+  error,
+  onAutoAdvance
 }) => {
   return (
     <div className="form-step">
@@ -16,7 +17,7 @@ const Paso4Documentacion = ({
           Documentación
         </h2>
         <p className="step-description">
-          Adjunte la orden o autorización médica
+          Adjunte la orden o autorización médica si la tiene
         </p>
       </div>
 
@@ -24,8 +25,7 @@ const Paso4Documentacion = ({
         <div className="info-box">
           <FaInfoCircle className="info-icon" />
           <p>
-            <strong>Importante:</strong> Suba la orden o autorización médica en formato PDF.
-            Este documento es necesario para procesar su solicitud.
+            <strong>Este paso es opcional:</strong> Si no tiene el documento PDF de su orden o autorización a la mano, no se preocupe. Puede tocar el botón de abajo para continuar sin subir nada.
           </p>
         </div>
         
@@ -33,6 +33,7 @@ const Paso4Documentacion = ({
           archivo={archivo}
           setArchivo={setArchivo}
           error={error && error.includes('archivo') ? error : ''}
+          onSkip={onAutoAdvance}
         />
         
         {archivo && (
@@ -44,7 +45,7 @@ const Paso4Documentacion = ({
       </div>
 
       <div className="step-info">
-        <p><strong>Requisitos del archivo:</strong> Formato PDF, tamaño máximo 15 MB, legible.</p>
+        <p>Si ya seleccionó su archivo o no tiene uno, presione "Siguiente" o "Continuar sin subir" para avanzar.</p>
       </div>
     </div>
   );

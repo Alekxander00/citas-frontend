@@ -4,7 +4,8 @@ import SelectEspecialidad from '../components/SelectEspecialidad';
 
 const Paso2InformacionMedica = ({ 
   especialidadCodigo, 
-  setEspecialidadCodigo 
+  setEspecialidadCodigo,
+  onAutoAdvance
 }) => {
   return (
     <div className="form-step">
@@ -21,20 +22,17 @@ const Paso2InformacionMedica = ({
 
       <div className="step-content">
         <div className="form-group">
-          <label>Especialidad Médica <span className="required">*</span></label>
           <SelectEspecialidad
             onEspecialidadChange={setEspecialidadCodigo}
             value={especialidadCodigo}
+            onAutoAdvance={onAutoAdvance}
           />
-          <small className="form-text">
-            Seleccione la especialidad médica que necesita
-          </small>
         </div>
       </div>
 
       <div className="step-info">
         <FaInfoCircle className="info-icon" />
-        <p>Si no encuentra su especialidad, seleccione "Medicina General" y especifique en la consulta.</p>
+        <p>Si no encuentra su especialidad, por favor seleccione "Medicina General" y coméntele los detalles al doctor por teléfono.</p>
       </div>
     </div>
   );

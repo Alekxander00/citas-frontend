@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaSun, FaCloudSun, FaCalendarDay, FaCheck } from 'react-icons/fa';
 
 const DIAS_SEMANA = [
   { value: 'LUNES', label: 'Lunes' },
@@ -10,49 +11,84 @@ const DIAS_SEMANA = [
 ];
 
 const JORNADAS = [
-  { value: 'MANANA', label: 'Mañana' },
-  { value: 'TARDE', label: 'Tarde' },
+  { value: 'MANANA', label: 'Mañana', icon: FaSun, desc: '8:00 AM - 12:00 PM' },
+  { value: 'TARDE', label: 'Tarde', icon: FaCloudSun, desc: '2:00 PM - 6:00 PM' },
 ];
 
-const SelectDisponibilidad = ({ diaSemana, setDiaSemana, jornada, setJornada }) => {
+const SelectDisponibilidad = ({ diaSemana, setDiaSemana, jornada, setJornada, onAutoAdvance }) => {
+  
+  const handleSelectDia = (diaVal) => {
+    setDiaSemana(diaVal);
+    // Si la jornada ya está seleccionada, auto-avanzar
+    if (jornada && onAutoAdvance) {
+      setTimeout(() => {
+        onAutoAdvance();
+      }, 350);
+    }
+  };
+
+  const handleSelectJornada = (jornadaVal) => {
+    setJornada(jornadaVal);
+    // Si el día ya está seleccionado, auto-avanzar
+    if (diaSemana && onAutoAdvance) {
+      setTimeout(() => {
+        onAutoAdvance();
+      }, 350);
+    }
+  };
+
   return (
-    <div className="disponibilidad-container">
-      <div className="form-group">
-        <label htmlFor="dia_semana">Día de la semana <span className="required">*</span></label>
-        <select
-          id="dia_semana"
-          name="dia_semana"
-          value={diaSemana}
-          onChange={(e) => setDiaSemana(e.target.value)}
-          required
-          className="form-control"
-        >
-          <option value="">Seleccione un día</option>
-          {DIAS_SEMANA.map((dia) => (
-            <option key={dia.value} value={dia.value}>
-              {dia.label}
-            </option>
-          ))}
-        </select>
+    <div className="disponibilidad-grid-container">
+      <div className="form-group select-grupo-dia">
+        <label className="section-label">1. Seleccione el Día <span className="required">*</span></label>
+        <p className="label-ayuda">Toque el día que prefiere para su cita:</p>
+        <div className="dias-grid">
+          {DIAS_SEMANA.map((dia) => {
+            const isSelected = diaSemana === dia.value;
+            return (
+              <button
+                key={dia.value}
+                type="button"
+                className={`dia-card-btn ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleSelectDia(dia.value)}
+              >
+                <div className="dia-card-content">
+                  <FaCalendarDay className="dia-icon" />
+                  <span className="dia-text">{dia.label}</span>
+                  {isSelected && <FaCheck className="check-badge" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="jornada">Jornada <span className="required">*</span></label>
-        <select
-          id="jornada"
-          name="jornada"
-          value={jornada}
-          onChange={(e) => setJornada(e.target.value)}
-          required
-          className="form-control"
-        >
-          <option value="">Seleccione una jornada</option>
-          {JORNADAS.map((jornadaItem) => (
-            <option key={jornadaItem.value} value={jornadaItem.value}>
-              {jornadaItem.label}
-            </option>
-          ))}
-        </select>
+      <div className="form-group select-grupo-jornada">
+        <label className="section-label">2. Seleccione la Jornada <span className="required">*</span></label>
+        <p className="label-ayuda">¿Prefiere ir por la mañana o por la tarde?:</p>
+        <div className="jornadas-grid">
+          {JORNADAS.map((jor) => {
+            const isSelected = jornada === jor.value;
+            const IconComponent = jor.icon;
+            return (
+              <button
+                key={jor.value}
+                type="button"
+                className={`jornada-card-btn ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleSelectJornada(jor.value)}
+              >
+                <div className="jornada-card-content">
+                  <IconComponent className={`jornada-icon ${jor.value.toLowerCase()}`} />
+                  <div className="jornada-info">
+                    <span className="jornada-title">{jor.label}</span>
+                    <span className="jornada-time">{jor.desc}</span>
+                  </div>
+                  {isSelected && <FaCheck className="check-badge-jornada" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

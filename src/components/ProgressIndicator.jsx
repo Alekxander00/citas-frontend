@@ -1,27 +1,41 @@
 import React from 'react';
+import { FaCheck } from 'react-icons/fa';
 import './ProgressIndicator.css';
 
-const ProgressIndicator = ({ currentStep }) => {
+const ProgressIndicator = ({ currentStep, totalSteps = 5 }) => {
   const steps = [
     { number: 1, label: 'Datos Personales' },
-    { number: 2, label: 'Información Médica' },
+    { number: 2, label: 'Especialidad' },
     { number: 3, label: 'Disponibilidad' },
-    { number: 4, label: 'Documentación' }
+    { number: 4, label: 'Documentación' },
+    { number: 5, label: 'Confirmación' }
   ];
 
   return (
-    <div className="progress-indicator">
-      {steps.map((step, index) => (
-        <div key={step.number} className="step-container">
-          <div className={`step ${currentStep >= step.number ? 'active' : ''}`}>
-            {currentStep > step.number ? '✓' : step.number}
-          </div>
-          <span className="step-label">{step.label}</span>
-          {index < steps.length - 1 && (
-            <div className={`connector ${currentStep > step.number ? 'active' : ''}`} />
-          )}
-        </div>
-      ))}
+    <div className="progress-container">
+      <div 
+        className="progress-bar" 
+        style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
+      ></div>
+      <div className="progress-steps">
+        {steps.map((step) => {
+          const isCompleted = currentStep > step.number;
+          const isActive = currentStep >= step.number;
+          const isCurrent = currentStep === step.number;
+          
+          return (
+            <div 
+              key={step.number} 
+              className={`progress-step ${isActive ? 'active' : ''} ${isCurrent ? 'current' : ''}`}
+            >
+              <div className="step-dot">
+                {isCompleted ? <FaCheck /> : step.number}
+              </div>
+              <span className="step-label">{step.label}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

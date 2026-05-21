@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FaHeartbeat,
-  FaShieldAlt,
   FaInfoCircle
 } from 'react-icons/fa';
 
@@ -12,8 +11,8 @@ import Paso3Disponibilidad from './Paso3Disponibilidad';
 import Paso4Documentacion from './Paso4Documentacion';
 import Paso5Resumen from './Paso5Resumen';
 import WizardNavigation from '../components/WizardNavigation';
+import ProgressIndicator from '../components/ProgressIndicator';
 import AnimatedBackground from '../components/AnimatedBackground';
-import Footer from '../components/Footer';
 import { crearCita, obtenerEspecialidades } from '../services/api';
 import '../App.css';
 
@@ -35,16 +34,10 @@ const AgendarCita = () => {
   const [mensajeExito, setMensajeExito] = useState('');
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
   
-  // Estados para PDF y especialidades
-  const [codigoCita, setCodigoCita] = useState(null);
-  const [descargandoPDF, setDescargandoPDF] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState('');
+  // Especialidades
   const [especialidades, setEspecialidades] = useState([]);
   
-  const API_URL = import.meta.env.VITE_API_URL || 'https://citas-backend-production-3949.up.railway.app';
-
   // Cargar especialidades al inicio
   useEffect(() => {
     const cargarEspecialidades = async () => {
@@ -52,6 +45,10 @@ const AgendarCita = () => {
         const data = await obtenerEspecialidades();
         if (data && data.especialidades) {
           setEspecialidades(data.especialidades);
+        } else if (data && data.data) {
+          setEspecialidades(data.data);
+        } else if (Array.isArray(data)) {
+          setEspecialidades(data);
         }
       } catch (err) {
         console.error('Error cargando especialidades:', err);
@@ -69,13 +66,13 @@ const AgendarCita = () => {
                numeroIdentificacion && numeroIdentificacion.length >= 5 && 
                telefono && telefono.length >= 7;
       case 2:
-        return especialidadCodigo;
+        return !!especialidadCodigo;
       case 3:
-        return diaSemana && jornada;
+        return !!diaSemana && !!jornada;
       case 4:
-        return true; // PDF es opcional, por tanto el paso 4 siempre es válido
+        return true; // PDF es opcional
       case 5:
-        return true; // El resumen siempre es válido
+        return true; // Resumen siempre es válido
       default:
         return false;
     }
@@ -120,9 +117,7 @@ const AgendarCita = () => {
       }
 
       const respuesta = await crearCita(formData);
-      
       setMensajeExito(respuesta.mensaje || 'Su solicitud de cita ha sido registrada correctamente.');
-      setCodigoCita(respuesta.codigo_cita || respuesta.data?.codigo_cita);
       
     } catch (err) {
       console.error('Error al crear la cita:', err);
@@ -142,8 +137,6 @@ const AgendarCita = () => {
     setJornada('');
     setArchivo(null);
     setCurrentStep(1);
-    setCodigoCita(null);
-    setDownloadUrl('');
     setError('');
     setMensajeExito('');
   };
@@ -179,12 +172,6 @@ const AgendarCita = () => {
                 <br />
                 Nos comunicaremos con usted por <strong>teléfono</strong> o por mensaje de <strong>WhatsApp</strong> para confirmarle el día y la hora exacta de su cita médica con el doctor.
               </p>
-              
-              {codigoCita && (
-                <p className="success-codigo-cita">
-                  <strong>Código de su solicitud:</strong> <span className="codigo-resaltado">{codigoCita}</span>
-                </p>
-              )}
             </div>
 
             <button
@@ -198,19 +185,10 @@ const AgendarCita = () => {
         ) : (
           /* FORMULARIO WIZARD ACCESIBLE */
           <>
-            {/* Wizard Navigation */}
-            <WizardNavigation
-              currentStep={currentStep}
-              totalSteps={totalSteps}
-              onNext={handleNext}
-              onPrev={handlePrev}
-              onSubmit={handleSubmit}
-              isValidStep={isValidStep()}
-              isSubmitting={cargando}
-              showSubmit={currentStep === totalSteps}
-            />
+            {/* 1. Indicador de progreso (Barra superior) */}
+            <ProgressIndicator currentStep={currentStep} totalSteps={totalSteps} />
 
-            {/* Steps Content */}
+            {/* 2. Contenido de los pasos */}
             <div className="wizard-content">
               {currentStep === 1 && (
                 <Paso1DatosPersonales
@@ -220,6 +198,7 @@ const AgendarCita = () => {
                   setNumeroIdentificacion={setNumeroIdentificacion}
                   telefono={telefono}
                   setTelefono={setTelefono}
+                  onAutoAdvance={handleNext}
                 />
               )}
 
@@ -263,31 +242,33 @@ const AgendarCita = () => {
                   onEditStep={handleEditStep}
                 />
               )}
+            </div>
 
-              {error && (
-                <div className="alert alert-error">
-                  <div className="alert-content">
-                    <FaInfoCircle className="alert-icon" />
-                    <div>
-                      <h3>Error al procesar solicitud</h3>
-                      <p>{error}</p>
-                    </div>
+            {/* Manejo de errores */}
+            {error && (
+              <div className="alert alert-error">
+                <div className="alert-content">
+                  <FaInfoCircle className="alert-icon" />
+                  <div>
+                    <h3>Error al procesar solicitud</h3>
+                    <p>{error}</p>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Información adicional */}
-            <div className="wizard-info">
-              <FaInfoCircle className="wizard-info-icon" />
-              <p>
-                <strong>Recuerde:</strong> Este sistema no requiere registro previo. Le llamaremos o escribiremos por WhatsApp para confirmar su cita.
-              </p>
-            </div>
+            {/* 3. Navegación del wizard (Botones inferiores) */}
+            <WizardNavigation
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNext={handleNext}
+              onPrev={handlePrev}
+              onSubmit={handleSubmit}
+              isValidStep={isValidStep()}
+              isSubmitting={cargando}
+            />
           </>
         )}
-
-        <Footer />
       </div>
     </div>
   );

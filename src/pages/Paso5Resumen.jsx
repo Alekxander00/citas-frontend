@@ -187,15 +187,6 @@ const Paso5Resumen = ({
               </div>
             </div>
           </div>
-
-          {/* Mensaje de confirmación */}
-          <div className="confirmation-message">
-            <FaCheck className="confirmation-icon" />
-            <p>
-              Al enviar esta solicitud, acepta que será contactado telefónicamente en los próximos días 
-              para confirmar la fecha y hora exacta de su cita médica.
-            </p>
-          </div>
         </div>
       </div>
     </div>

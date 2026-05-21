@@ -23,13 +23,6 @@ const Paso3Disponibilidad = ({
       </div>
 
       <div className="step-content">
-        <div className="info-box">
-          <FaInfoCircle className="info-icon" />
-          <p>
-            Seleccione su disponibilidad preferida. <strong>Le llamaremos por teléfono</strong> para acordar la hora exacta de la consulta con el doctor.
-          </p>
-        </div>
-        
         <SelectDisponibilidad
           diaSemana={diaSemana}
           setDiaSemana={setDiaSemana}
@@ -37,11 +30,6 @@ const Paso3Disponibilidad = ({
           setJornada={setJornada}
           onAutoAdvance={onAutoAdvance}
         />
-      </div>
-
-      <div className="step-info">
-        <FaClock className="info-icon" />
-        <p><strong>Horarios Generales:</strong> Mañana: 8:00 AM - 12:00 PM | Tarde: 2:00 PM - 6:00 PM</p>
       </div>
     </div>
   );

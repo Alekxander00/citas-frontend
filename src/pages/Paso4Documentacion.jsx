@@ -1,5 +1,5 @@
-import React from 'react';
-import { FaFilePdf, FaCheck, FaInfoCircle } from 'react-icons/fa';
+import React, { useEffect } from 'react';
+import { FaFilePdf, FaCheck } from 'react-icons/fa';
 import FileUpload from '../components/FileUpload';
 
 const Paso4Documentacion = ({ 
@@ -8,6 +8,17 @@ const Paso4Documentacion = ({
   error,
   onAutoAdvance
 }) => {
+
+  // Auto-avance automático al Paso 5 cuando suben un archivo
+  useEffect(() => {
+    if (archivo && onAutoAdvance) {
+      const timer = setTimeout(() => {
+        onAutoAdvance();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [archivo, onAutoAdvance]);
+
   return (
     <div className="form-step">
       <div className="step-header">
@@ -22,13 +33,6 @@ const Paso4Documentacion = ({
       </div>
 
       <div className="step-content">
-        <div className="info-box">
-          <FaInfoCircle className="info-icon" />
-          <p>
-            <strong>Este paso es opcional:</strong> Si no tiene el documento PDF de su orden o autorización a la mano, no se preocupe. Puede tocar el botón de abajo para continuar sin subir nada.
-          </p>
-        </div>
-        
         <FileUpload
           archivo={archivo}
           setArchivo={setArchivo}
@@ -42,10 +46,6 @@ const Paso4Documentacion = ({
             <span>Archivo listo: <strong>{archivo.name}</strong> ({(archivo.size / 1024 / 1024).toFixed(2)} MB)</span>
           </div>
         )}
-      </div>
-
-      <div className="step-info">
-        <p>Si ya seleccionó su archivo o no tiene uno, presione "Siguiente" o "Continuar sin subir" para avanzar.</p>
       </div>
     </div>
   );

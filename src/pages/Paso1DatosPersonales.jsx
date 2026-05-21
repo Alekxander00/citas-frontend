@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FaUser, FaIdCard, FaPhone } from 'react-icons/fa';
 import SelectIdentificacion from '../components/SelectIdentificacion';
 import InputNumerico from '../components/InputNumerico';
@@ -9,8 +9,25 @@ const Paso1DatosPersonales = ({
   numeroIdentificacion,
   setNumeroIdentificacion,
   telefono,
-  setTelefono
+  setTelefono,
+  onAutoAdvance
 }) => {
+
+  // Auto-avance automático al Paso 2 cuando los datos estén completos y válidos
+  useEffect(() => {
+    const isValid = 
+      tipoIdentificacion && 
+      numeroIdentificacion && numeroIdentificacion.length >= 5 && 
+      telefono && telefono.length >= 7;
+
+    if (isValid && onAutoAdvance) {
+      const timer = setTimeout(() => {
+        onAutoAdvance();
+      }, 1000); // 1 segundo de espera para que terminen de escribir el celular
+      return () => clearTimeout(timer);
+    }
+  }, [tipoIdentificacion, numeroIdentificacion, telefono, onAutoAdvance]);
+
   return (
     <div className="form-step active">
       <div className="step-header">
@@ -60,10 +77,6 @@ const Paso1DatosPersonales = ({
           maxLength="15"
           placeholder="Ej: 3001234567"
         />
-      </div>
-
-      <div className="step-info step-info-whatsapp">
-        <p><strong>⚠️ Importante:</strong> Ingrese un número de celular que tenga <strong>WhatsApp activo</strong>. Por ese medio coordinaremos la fecha y hora final de su cita médica con el doctor.</p>
       </div>
     </div>
   );

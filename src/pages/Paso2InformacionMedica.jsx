@@ -29,11 +29,6 @@ const Paso2InformacionMedica = ({
           />
         </div>
       </div>
-
-      <div className="step-info">
-        <FaInfoCircle className="info-icon" />
-        <p>Si no encuentra su especialidad, por favor seleccione "Medicina General" y coméntele los detalles al doctor por teléfono.</p>
-      </div>
     </div>
   );
 };

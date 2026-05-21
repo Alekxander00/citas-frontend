@@ -6,8 +6,7 @@ const Paso3Disponibilidad = ({
   diaSemana, 
   setDiaSemana,
   jornada,
-  setJornada,
-  onAutoAdvance
+  setJornada
 }) => {
   return (
     <div className="form-step">
@@ -28,7 +27,6 @@ const Paso3Disponibilidad = ({
           setDiaSemana={setDiaSemana}
           jornada={jornada}
           setJornada={setJornada}
-          onAutoAdvance={onAutoAdvance}
         />
       </div>
     </div>

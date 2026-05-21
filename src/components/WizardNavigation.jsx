@@ -12,14 +12,15 @@ const WizardNavigation = ({
   onPrev,
   onSubmit,
   isValidStep,
-  isSubmitting
+  isSubmitting,
+  archivo
 }) => {
   return (
     <div className="navigation-buttons">
       {/* Button: Regresar (Visible on steps 2-5) */}
       {currentStep > 1 ? (
         <button
-          type="button; submit"
+          type="button"
           className="btn btn-prev"
           onClick={onPrev}
           disabled={isSubmitting}
@@ -36,17 +37,8 @@ const WizardNavigation = ({
         Paso {currentStep} de {totalSteps}
       </div>
 
-      {/* Button: Next/Submit (Only visible on Step 4 and Step 5) */}
-      {currentStep === 4 ? (
-        <button
-          type="button"
-          className="btn btn-next"
-          onClick={onNext}
-          disabled={isSubmitting}
-        >
-          Continuar sin documento <FaArrowRight />
-        </button>
-      ) : currentStep === 5 ? (
+      {/* Button: Next/Submit */}
+      {currentStep === 5 ? (
         <button
           type="button"
           className="btn btn-submit"
@@ -61,6 +53,29 @@ const WizardNavigation = ({
           ) : (
             <>
               <FaPaperPlane /> Enviar Solicitud
+            </>
+          )}
+        </button>
+      ) : (currentStep === 4 || isValidStep) ? (
+        <button
+          type="button"
+          className="btn btn-next"
+          onClick={onNext}
+          disabled={isSubmitting}
+        >
+          {currentStep === 4 ? (
+            archivo ? (
+              <>
+                Continuar <FaArrowRight />
+              </>
+            ) : (
+              <>
+                Continuar sin documento <FaArrowRight />
+              </>
+            )
+          ) : (
+            <>
+              Continuar <FaArrowRight />
             </>
           )}
         </button>

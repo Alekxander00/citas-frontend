@@ -15,26 +15,14 @@ const JORNADAS = [
   { value: 'TARDE', label: 'Tarde', icon: FaCloudSun, desc: '2:00 PM - 6:00 PM' },
 ];
 
-const SelectDisponibilidad = ({ diaSemana, setDiaSemana, jornada, setJornada, onAutoAdvance }) => {
+const SelectDisponibilidad = ({ diaSemana, setDiaSemana, jornada, setJornada }) => {
   
   const handleSelectDia = (diaVal) => {
     setDiaSemana(diaVal);
-    // Si la jornada ya está seleccionada, auto-avanzar
-    if (jornada && onAutoAdvance) {
-      setTimeout(() => {
-        onAutoAdvance();
-      }, 350);
-    }
   };
 
   const handleSelectJornada = (jornadaVal) => {
     setJornada(jornadaVal);
-    // Si el día ya está seleccionado, auto-avanzar
-    if (diaSemana && onAutoAdvance) {
-      setTimeout(() => {
-        onAutoAdvance();
-      }, 350);
-    }
   };
 
   return (
@@ -81,7 +69,7 @@ const SelectDisponibilidad = ({ diaSemana, setDiaSemana, jornada, setJornada, on
                   <IconComponent className={`jornada-icon ${jor.value.toLowerCase()}`} />
                   <div className="jornada-info">
                     <span className="jornada-title">{jor.label}</span>
-                    <span className="jornada-time">{jor.desc}</span>
+                    <span className="jornada-desc">{jor.desc}</span>
                   </div>
                   {isSelected && <FaCheck className="check-badge-jornada" />}
                 </div>

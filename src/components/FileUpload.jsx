@@ -96,18 +96,6 @@ const FileUpload = ({ archivo, setArchivo, error, onSkip }) => {
       </div>
 
       {error && <div className="error-message-glass">{error}</div>}
-
-      <div className="skip-upload-section">
-        {!archivo && onSkip && (
-          <button 
-            type="button" 
-            className="btn btn-skip-step"
-            onClick={onSkip}
-          >
-            Continuar sin subir documento ➜
-          </button>
-        )}
-      </div>
     </div>
   );
 };

@@ -87,11 +87,6 @@ const SelectEspecialidad = ({ onEspecialidadChange, value, onAutoAdvance }) => {
     if (onEspecialidadChange) {
       onEspecialidadChange(codigo);
     }
-    if (onAutoAdvance) {
-      setTimeout(() => {
-        onAutoAdvance();
-      }, 350);
-    }
   };
 
   if (loading) {

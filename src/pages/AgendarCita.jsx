@@ -141,6 +141,36 @@ const AgendarCita = () => {
     setMensajeExito('');
   };
 
+  // Manejador para cambiar especialidad y auto-avanzar
+  const handleEspecialidadChange = (codigo) => {
+    setEspecialidadCodigo(codigo);
+    setTimeout(() => {
+      setCurrentStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 300);
+  };
+
+  // Manejadores para cambiar disponibilidad y auto-avanzar
+  const handleDiaSemanaChange = (dia) => {
+    setDiaSemana(dia);
+    if (jornada) {
+      setTimeout(() => {
+        setCurrentStep(4);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 300);
+    }
+  };
+
+  const handleJornadaChange = (jorn) => {
+    setJornada(jorn);
+    if (diaSemana) {
+      setTimeout(() => {
+        setCurrentStep(4);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 300);
+    }
+  };
+
   return (
     <div className="app-container">
       <AnimatedBackground />
@@ -174,13 +204,15 @@ const AgendarCita = () => {
               </p>
             </div>
 
-            <button
-              type="button"
-              className="btn btn-new-request-glass"
-              onClick={resetForm}
-            >
-              Pedir Otra Cita Médica
-            </button>
+            <div className="success-actions">
+              <button
+                type="button"
+                className="btn btn-new-request-glass"
+                onClick={resetForm}
+              >
+                Pedir Otra Cita Médica
+              </button>
+            </div>
           </div>
         ) : (
           /* FORMULARIO WIZARD ACCESIBLE */
@@ -205,18 +237,16 @@ const AgendarCita = () => {
               {currentStep === 2 && (
                 <Paso2InformacionMedica
                   especialidadCodigo={especialidadCodigo}
-                  setEspecialidadCodigo={setEspecialidadCodigo}
-                  onAutoAdvance={handleNext}
+                  setEspecialidadCodigo={handleEspecialidadChange}
                 />
               )}
 
               {currentStep === 3 && (
                 <Paso3Disponibilidad
                   diaSemana={diaSemana}
-                  setDiaSemana={setDiaSemana}
+                  setDiaSemana={handleDiaSemanaChange}
                   jornada={jornada}
-                  setJornada={setJornada}
-                  onAutoAdvance={handleNext}
+                  setJornada={handleJornadaChange}
                 />
               )}
 
@@ -266,6 +296,7 @@ const AgendarCita = () => {
               onSubmit={handleSubmit}
               isValidStep={isValidStep()}
               isSubmitting={cargando}
+              archivo={archivo}
             />
           </>
         )}

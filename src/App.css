@@ -46,6 +46,12 @@
   box-sizing: border-box;
 }
 
+/* Asegurar que inputs, botones y selects hereden el color y fuente del tema */
+button, input, select, textarea {
+  color: inherit;
+  font-family: inherit;
+}
+
 html, body {
   min-height: 100vh;
   background: var(--bg-clinical-gradient);
@@ -217,7 +223,8 @@ h1 {
   color: var(--text-muted);
   text-align: center;
   transition: var(--transition-smooth);
-  white-space: nowrap;
+  max-width: 120px;
+  line-height: 1.2;
 }
 
 .progress-step.active .step-label {
@@ -1001,6 +1008,9 @@ select.form-control option {
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);
   transition: var(--transition-fast);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .btn-new-request-glass:hover {
@@ -1008,7 +1018,30 @@ select.form-control option {
   box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
 }
 
+.success-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 25px;
+}
+
 /* ===== RESPONSIVIDAD (MÓVILES) ===== */
+@media (max-width: 850px) {
+  .step-label {
+    display: none; /* Ocultar los textos del progress bar en pantallas medianas y móviles */
+  }
+  
+  .progress-container {
+    padding: 10px 0 10px;
+    margin-bottom: 20px;
+  }
+  
+  .progress-container::before, .progress-bar {
+    top: 28px;
+  }
+}
+
 @media (max-width: 768px) {
   html, body {
     font-size: 16px;
@@ -1031,14 +1064,6 @@ select.form-control option {
     width: 36px;
     height: 36px;
     font-size: 1rem;
-  }
-  
-  .step-label {
-    font-size: 0.8rem;
-  }
-  
-  .progress-container::before, .progress-bar {
-    top: 28px;
   }
   
   .step-header h2 {

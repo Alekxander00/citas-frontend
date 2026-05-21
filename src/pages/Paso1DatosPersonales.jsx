@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaUser, FaIdCard, FaPhone } from 'react-icons/fa';
 import SelectIdentificacion from '../components/SelectIdentificacion';
 import InputNumerico from '../components/InputNumerico';
@@ -12,21 +12,37 @@ const Paso1DatosPersonales = ({
   setTelefono,
   onAutoAdvance
 }) => {
+  const [hasInteracted, setHasInteracted] = useState(false);
 
-  // Auto-avance automático al Paso 2 cuando los datos estén completos y válidos
+  // Auto-avance automático al Paso 2 cuando los datos estén completos y válidos Y el usuario haya interactuado
   useEffect(() => {
     const isValid = 
       tipoIdentificacion && 
       numeroIdentificacion && numeroIdentificacion.length >= 5 && 
       telefono && telefono.length >= 7;
 
-    if (isValid && onAutoAdvance) {
+    if (isValid && hasInteracted && onAutoAdvance) {
       const timer = setTimeout(() => {
         onAutoAdvance();
       }, 1000); // 1 segundo de espera para que terminen de escribir el celular
       return () => clearTimeout(timer);
     }
-  }, [tipoIdentificacion, numeroIdentificacion, telefono, onAutoAdvance]);
+  }, [tipoIdentificacion, numeroIdentificacion, telefono, hasInteracted, onAutoAdvance]);
+
+  const handleTipoChange = (e) => {
+    setTipoIdentificacion(e.target.value);
+    setHasInteracted(true);
+  };
+
+  const handleNumeroChange = (e) => {
+    setNumeroIdentificacion(e.target.value);
+    setHasInteracted(true);
+  };
+
+  const handleTelefonoChange = (e) => {
+    setTelefono(e.target.value);
+    setHasInteracted(true);
+  };
 
   return (
     <div className="form-step active">
@@ -44,7 +60,7 @@ const Paso1DatosPersonales = ({
       <div className="step-content">
         <SelectIdentificacion
           value={tipoIdentificacion}
-          onChange={(e) => setTipoIdentificacion(e.target.value)}
+          onChange={handleTipoChange}
           required={true}
         />
 
@@ -56,7 +72,7 @@ const Paso1DatosPersonales = ({
           }
           name="numero_identificacion"
           value={numeroIdentificacion}
-          onChange={(e) => setNumeroIdentificacion(e.target.value)}
+          onChange={handleNumeroChange}
           required={true}
           minLength="5"
           maxLength="20"
@@ -71,7 +87,7 @@ const Paso1DatosPersonales = ({
           }
           name="telefono"
           value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
+          onChange={handleTelefonoChange}
           required={true}
           minLength="7"
           maxLength="15"

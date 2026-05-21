@@ -4,8 +4,7 @@ import SelectEspecialidad from '../components/SelectEspecialidad';
 
 const Paso2InformacionMedica = ({ 
   especialidadCodigo, 
-  setEspecialidadCodigo,
-  onAutoAdvance
+  setEspecialidadCodigo
 }) => {
   return (
     <div className="form-step">
@@ -25,7 +24,6 @@ const Paso2InformacionMedica = ({
           <SelectEspecialidad
             onEspecialidadChange={setEspecialidadCodigo}
             value={especialidadCodigo}
-            onAutoAdvance={onAutoAdvance}
           />
         </div>
       </div>
